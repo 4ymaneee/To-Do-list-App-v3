@@ -1,39 +1,73 @@
-const inputBox = document.getElementById("input-box");
-const listContainer = document.getElementById("list-container");
+// Array that contains the tasks
+let tasks = [];
 
-//create Task
-function addTask() {
-  if (inputBox.value === "") {
-    alert("you must write something!");
-  } else {
-    let li = document.createElement("li");
-    li.innerHTML = inputBox.value;
-    listContainer.appendChild(li);
-    let span = document.createElement("span");
-    span.innerHTML = "\u00d7";
-    li.appendChild(span);
-    inputBox.value = ""; // Clear the input box after adding a task
-  }
-
-  saveData();
+// Function to save tasks to local storage
+function saveTasksToLocalStorage() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-listContainer.addEventListener("click", function (e) {
-  if (e.target.tagName === "LI") {
-    // e.target refers to the HTML element that was clicked, not the "listContainer." In this code, it checks if the clicked element's tag name is "LI" or "SPAN" and performs different actions accordingly.
-    e.target.classList.toggle("checked"); //When you click an <li> element inside the "listContainer," e.target would be the clicked <li> element, and the code toggles the "checked" class on it.
-    saveData();
-  } else if (e.target.tagName === "SPAN") {
-    e.target.parentElement.remove();
-    saveData();
+// Function to retrieve tasks from local storage
+function getTasksFromLocalStorage() {
+  let storedTasks = localStorage.getItem("tasks");
+  if (storedTasks) {
+    tasks = JSON.parse(storedTasks);
+  }
+}
+
+// Read function: displays tasks in the UI
+function read() {
+  let tasksContainer = document.querySelector("#lists-container");
+  tasksContainer.innerHTML = "";
+
+  let index = 0;
+  for (let task of tasks) {
+    // Create a list item for each task
+    let content = `<li>${task.title}<span onclick="deleteTask(${index})">\u00d7</span></li>`;
+    tasksContainer.innerHTML += content;
+    index++;
+  }
+}
+
+// Create function: adds a new task to the tasks array and updates the UI
+let addBtn = document.querySelector("#add-task");
+let input = document.querySelector("input");
+addBtn.addEventListener("click", function () {
+  let value = input.value;
+  if (value.length != 0) {
+    // Create a task object and push it to the tasks array
+    let taskObj = {
+      "title": value,
+      "isDone": false,
+    };
+    tasks.push(taskObj);
+    saveTasksToLocalStorage(); // Save tasks to local storage
+    read(); // Update the UI with the new task
+    input.value = ""; // Clear the input field
+  } else {
+    alert("Please enter a task");
   }
 });
 
-function saveData() {
-  localStorage.setItem("data", listContainer.innerHTML);
+// Delete function: removes a task from the tasks array and updates the UI
+function deleteTask(index) {
+  let taskName = tasks[index].title;
+  let isConfirmed = confirm(`Are you sure you want to delete "${taskName}"?`);
+  if (isConfirmed) {
+    tasks.splice(index, 1);
+    saveTasksToLocalStorage(); // Save tasks after deletion
+    read(); // Update the UI after deleting the task
+  }
 }
 
-function showData() {
-  listContainer.innerHTML = localStorage.getItem("data");
-}
-showData();
+// Initialize: Retrieve tasks from local storage when the page loads
+getTasksFromLocalStorage();
+
+// Display tasks immediately when the page loads
+read();
+
+// Complete Task function: marks a task as completed and updates the UI
+document.querySelector("#lists-container").addEventListener("click", function (e) {
+  if (e.target.tagName === "LI") {
+    e.target.classList.toggle("checked");
+  }
+});
